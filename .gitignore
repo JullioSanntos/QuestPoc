@@ -1,0 +1,11 @@
+# .NET Build artifacts
+bin/
+obj/
+*.user
+.vs/
+
+# React/Node artifacts
+node_modules/
+dist/
+.env.local
+.DS_Store

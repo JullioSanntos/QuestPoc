@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-// 1. Strictly define the data shape coming down from your C# .NET Core API
 export interface LabOrder {
   id: number | string;
   testName: string;
@@ -8,24 +7,19 @@ export interface LabOrder {
   status: string;
 }
 
-// 2. Define the props contract for the component
 interface ActiveLabOrdersProps {
-  /** Optional trigger to force the internal table data to refresh from the cloud database */
   refreshTrigger?: boolean;
 }
 
 export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger }) => {
-  // --- Encapsulated Component State ---
   const [orders, setOrders] = useState<LabOrder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Type-safe API Data Fetch ---
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // NOTE: Using your exact local .NET API hosting port
       const response = await fetch('http://localhost:5056/api/diagnostics/orders');
       if (response.ok) {
         const data: LabOrder[] = await response.json();
@@ -34,31 +28,47 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
         setError(`Server returned an error status: ${response.status}`);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
       setError("Failed to connect to the backend database service.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Fetch data on initial mount and whenever the parent tells us to refresh
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders, refreshTrigger]);
 
-  // Helper method to clean status names dynamically for class string assignment
+  // --- Soft-Delete Integration ---
+  const handleDeprecate = async (id: number | string) => {
+    if (!window.confirm(`Are you sure you want to archive Order #${id}?`)) return;
+
+    try {
+      const response = await fetch(`http://localhost:5056/api/diagnostics/orders/${id}/deprecate`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        // Automatically re-fetch data to update the grid immediately
+        fetchOrders();
+      } else {
+        alert(`Failed to deprecate order. Status: ${response.status}`);
+      }
+    } catch (err) {
+      console.error("Error deprecating order:", err);
+      alert("Network error occurred while trying to archive the order.");
+    }
+  };
+
   const formatBadgeClass = (statusString: string): string => {
     return statusString.toLowerCase().replace(/\s+/g, '');
   };
 
   return (
     <div className="active-orders-wrapper">
-      {/* --- DATA TABLE CONTAINER --- */}
       <h3 className="grid-title" style={{ marginBottom: '12px' }}>
         Active Lab Orders (Simulated Microservice State)
       </h3>
 
-      {/* Optional feedback states for better system readability */}
       {isLoading && <p style={{ color: '#666', fontStyle: 'italic' }}>Refreshing cloud data...</p>}
       {error && <p style={{ color: '#ef4444', fontWeight: 'bold' }}>{error}</p>}
 
@@ -69,12 +79,13 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
             <th>Diagnostic Test Name</th>
             <th>Patient ID</th>
             <th>Status</th>
+            <th style={{ textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {orders.length === 0 && !isLoading ? (
             <tr>
-              <td colSpan={4} className="grid-cell" style={{ textAlign: 'center', color: '#666' }}>
+              <td colSpan={5} className="grid-cell" style={{ textAlign: 'center', color: '#666' }}>
                 No active lab orders found.
               </td>
             </tr>
@@ -84,16 +95,29 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
                 <td className="grid-cell" style={{ fontWeight: 'bold', color: '#3b82f6' }}>
                   {order.id}
                 </td>
-                <td className="grid-cell">
-                  {order.testName}
-                </td>
-                <td className="grid-cell">
-                  {order.patientId}
-                </td>
+                <td className="grid-cell">{order.testName}</td>
+                <td className="grid-cell">{order.patientId}</td>
                 <td className="grid-cell">
                   <span className={`badge badge-${formatBadgeClass(order.status)}`}>
                     {order.status}
                   </span>
+                </td>
+                {/* Action Column with the new button */}
+                <td className="grid-cell" style={{ textAlign: 'center' }}>
+                  <button 
+                    onClick={() => handleDeprecate(order.id)}
+                    style={{ 
+                      background: '#ef4444', 
+                      color: 'white', 
+                      border: 'none', 
+                      padding: '4px 8px', 
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    Archive
+                  </button>
                 </td>
               </tr>
             ))

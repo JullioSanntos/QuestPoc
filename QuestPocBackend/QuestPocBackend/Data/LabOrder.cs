@@ -6,4 +6,5 @@ public class LabOrder {
     public string TestName { get; set; } = string.Empty;
     public string PatientId { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public DateTime? DeprecatedAt { get; set; }
 }

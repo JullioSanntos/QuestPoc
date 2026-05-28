@@ -1,36 +1,39 @@
 
-namespace QuestPocBackend {
-    public class Program {
-        public static void Main(string[] args) {
-            var builder = WebApplication.CreateBuilder(args);
-            // 1. ADD CORS POLICY (Put this before builder.Build())
-            var questCorsPolicy = "_questCorsPolicy";
+using Microsoft.EntityFrameworkCore;
+using QuestPocBackend.Data;
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy(name: questCorsPolicy,
-                    policy => {
-                        policy.WithOrigins("http://localhost:5173") // Allow your Vite (React) dev server
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                    });
-            });
+namespace QuestPocBackend;
 
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
+public class Program {
+    public static void Main(string[] args) {
+        var builder = WebApplication.CreateBuilder(args);
+        
+        var questCorsPolicy = "_questCorsPolicy";
 
-            var app = builder.Build();
+        builder.Services.AddCors(options => {
+            options.AddPolicy(name: questCorsPolicy,
+                policy => {
+                    policy.WithOrigins("http://localhost:5173") // Allow your Vite (React) dev server
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+        });
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
 
-            app.UseHttpsRedirection();
+        var app = builder.Build();
 
-            // 2. ENABLE CORS POLICY (Put this before UseAuthorization)
-            app.UseCors("AllowFrontend");
+        app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-            app.UseCors(questCorsPolicy); //remember to enable CORS before mapping controllers
-            app.MapControllers();
+        // 2. ENABLE CORS POLICY (Put this before UseAuthorization)
+        app.UseCors("AllowFrontend");
 
-            app.Run();
-        }
+        app.UseAuthorization();
+        app.UseCors(questCorsPolicy); //remember to enable CORS before mapping controllers
+        app.MapControllers();
+
+        app.Run();
     }
 }

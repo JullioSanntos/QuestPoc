@@ -1,89 +1,148 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 function App() {
+  // --- Existing State ---
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Pointing exactly to your live local .NET 10 Web API port
-  const BACKEND_API_URL = 'https://localhost:7294/api/diagnostics/orders'; 
+  // --- New Form States ---
+  const [testName, setTestName] = useState('');
+  const [patientId, setPatientId] = useState('');
+  const [status, setStatus] = useState('Pending');
+
+  // --- Existing Fetch Data Logic ---
+  const fetchOrders = async () => {
+    try {
+      // NOTE: Verify this matches your local .NET API hosting port
+      const response = await fetch('http://localhost:5056/api/diagnostics/orders');
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
   useEffect(() => {
-    fetch(BACKEND_API_URL)
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        return response.json();
-      })
-      .then((data) => {
-        setOrders(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    fetchOrders();
   }, []);
 
+  // --- New Handler to POST Data to SQL Server via API ---
+  const handleCreateOrder = async (e) => {
+    e.preventDefault();
+    
+    // Quick client-side validation validation
+    if (!testName.trim() || !patientId.trim()) {
+      alert("Please fill out both the Test Name and Patient ID.");
+      return;
+    }
+
+    const newOrder = { 
+      testName: testName.trim(), 
+      patientId: patientId.trim(), 
+      status 
+    };
+
+    try {
+      const response = await fetch('http://localhost:5056/api/diagnostics/orders', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(newOrder),
+      });
+
+      if (response.ok) {
+        // 1. Reset input form states on success
+        setTestName('');
+        setPatientId('');
+        setStatus('Pending');
+        
+        // 2. Re-fetch fresh rows directly from SQL Server to update our table UI
+        fetchOrders();
+      } else {
+        console.error("Server returned an error status:", response.status);
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+    }
+  };
+
   return (
-    <div style={{ fontFamily: 'Segoe UI, sans-serif', padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <header style={{ borderBottom: '3px solid #005a9c', paddingBottom: '1rem', marginBottom: '2rem' }}>
-        <h1 style={{ color: '#005a9c', margin: 0, fontSize: '2.2rem' }}>Quest Architecture Assessment</h1>
-        <p style={{ color: '#555', marginTop: '0.5rem', fontSize: '1.1rem' }}>
-          React SPA Single Page Application bound to an asynchronous .NET 10 Core API Tier
-        </p>
-      </header>
+    <div className="dashboard-card">
+      {/* Main Title Section */}
+      <h1 style={{ color: '#0ea5e9', marginBottom: '4px' }}>Quest Architecture Assessment</h1>
+      <p className="subheader" style={{ margin: '0 0 40px 0' }}>
+        React SPA Single Page Application bound to an asynchronous .NET 10 Core API Tier
+      </p>
 
-      {loading && (
-        <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-          <p style={{ fontSize: '1.2rem', color: '#666' }}>Querying upstream diagnostics api gateway...</p>
-        </div>
-      )}
+      <hr style={{ border: 'none', borderTop: '2px solid #1d4ed8', marginBottom: '30px' }} />
 
-      {error && (
-        <div style={{ padding: '1rem', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '1rem' }}>
-          <strong>Network Connectivity Error:</strong> {error}
-          <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-            Tip: Ensure your Visual Studio backend project is actively running on port 7294 and that you accepted the local localhost SSL certificate in your browser.
-          </p>
-        </div>
-      )}
+      {/* --- NEW FORM COMPONENT: Inserts entries into SQL Server --- */}
+      <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#1e293b', borderRadius: '8px' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Create New Lab Order</h3>
+        <form onSubmit={handleCreateOrder} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <input 
+            type="text" 
+            placeholder="Diagnostic Test Name (e.g., Lipid Panel)" 
+            value={testName}
+            onChange={(e) => setTestName(e.target.value)}
+            style={{ padding: '10px 14px', borderRadius: '4px', border: '1px solid #475569', background: '#0f172a', color: '#fff', flex: 1 }}
+          />
+          <input 
+            type="text" 
+            placeholder="Patient ID (e.g., PT-1234)" 
+            value={patientId}
+            onChange={(e) => setPatientId(e.target.value)}
+            style={{ padding: '10px 14px', borderRadius: '4px', border: '1px solid #475569', background: '#0f172a', color: '#fff', width: '180px' }}
+          />
+          <select 
+            value={status} 
+            onChange={(e) => setStatus(e.target.value)}
+            style={{ padding: '10px 14px', borderRadius: '4px', border: '1px solid #475569', background: '#0f172a', color: '#fff', cursor: 'pointer' }}
+          >
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+          </select>
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: '4px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+            Add Order
+          </button>
+        </form>
+      </div>
 
-      {!loading && !error && (
-        <div>
-          <h3 style={{ color: '#333', marginBottom: '1rem' }}>Active Lab Orders (Simulated Microservice State)</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#005a9c', color: 'white', textAlign: 'left' }}>
-                <th style={{ padding: '12px 15px' }}>Order ID</th>
-                <th style={{ padding: '12px 15px' }}>Diagnostic Test Name</th>
-                <th style={{ padding: '12px 15px' }}>Patient ID</th>
-                <th style={{ padding: '12px 15px', textAlign: 'center' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#005a9c' }}>{order.id}</td>
-                  <td style={{ padding: '12px 15px', color: '#333' }}>{order.testName}</td>
-                  <td style={{ padding: '12px 15px', color: '#666', fontFamily: 'monospace' }}>{order.patientId}</td>
-                  <td style={{ padding: '12px 15px', textAlign: 'center' }}>
-                    <span style={{
-                      padding: '6px 12px', 
-                      borderRadius: '20px', 
-                      fontSize: '0.85rem',
-                      fontWeight: 'bold',
-                      backgroundColor: order.status === 'Completed' ? '#d4edda' : order.status === 'In Progress' ? '#fff3cd' : '#f8d7da',
-                      color: order.status === 'Completed' ? '#155724' : order.status === 'In Progress' ? '#856404' : '#721c24'
-                    }}>
-                      {order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* --- DATA TABLE CONTAINER --- */}
+      <h3 className="grid-title" style={{ marginBottom: '12px' }}>Active Lab Orders (Simulated Microservice State)</h3>
+      <table className="grid-container">
+        <thead>
+          <tr className="grid-header">
+            <th>Order ID</th>
+            <th>Diagnostic Test Name</th>
+            <th>Patient ID</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order.id}>
+              <td className="grid-cell" style={{ fontWeight: 'bold', color: '#3b82f6' }}>
+                {order.id}
+              </td>
+              <td className="grid-cell">
+                {order.testName}
+              </td>
+              <td className="grid-cell">
+                {order.patientId}
+              </td>
+              <td className="grid-cell">
+                <span className={`badge badge-${order.status.toLowerCase().replace(/\s+/g, '')}`}>
+                  {order.status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

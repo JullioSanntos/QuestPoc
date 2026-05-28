@@ -13,7 +13,7 @@ public class Program {
         builder.Services.AddCors(options => {
             options.AddPolicy(name: questCorsPolicy,
                 policy => {
-                    policy.WithOrigins("http://localhost:5173") // Allow your Vite (React) dev server
+                    policy.AllowAnyOrigin()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
@@ -22,16 +22,18 @@ public class Program {
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-
         var app = builder.Build();
 
-        app.UseHttpsRedirection();
+        // Comment this out for local dev to prevent 307 redirect CORS short-circuits
+        // app.UseHttpsRedirection();
 
-        // 2. ENABLE CORS POLICY (Put this before UseAuthorization)
-        app.UseCors("AllowFrontend");
+        // 2. Apply your explicit named CORS policy BEFORE authorization or routing
+        app.UseCors(questCorsPolicy);
 
+        // 3. Evaluate Authorization rules on the allowed origin request
         app.UseAuthorization();
-        app.UseCors(questCorsPolicy); //remember to enable CORS before mapping controllers
+
+        // 4. Map the endpoints to the Controllers
         app.MapControllers();
 
         app.Run();

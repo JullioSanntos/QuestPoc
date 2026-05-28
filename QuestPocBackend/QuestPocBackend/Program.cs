@@ -39,7 +39,6 @@ public class Program {
 
         builder.Services.AddControllers();
 
-        // 1. Native .NET 10 API Documentation Service
         builder.Services.AddOpenApi();
 
         var app = builder.Build();
@@ -48,13 +47,11 @@ public class Program {
 
         // Apply CORS policy BEFORE authorization and Controllers
         app.UseCors(PublicCorsPolicy);
+
         app.UseAuthorization();
-
         app.MapControllers();
-
-        // 2. Map the documentation generation and interactive UI endpoints
-        app.MapOpenApi();             // Exposes raw OpenAPI metadata spec
-        app.MapScalarApiReference();  // Exposes interactive visual UI
+        app.MapOpenApi();            
+        app.MapScalarApiReference();  
 
         app.Run();
     }

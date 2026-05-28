@@ -17,7 +17,6 @@ public class DiagnosticsController : ControllerBase {
     // GET: api/diagnostics/orders
     [HttpGet("orders")]
     public async Task<IActionResult> GetActiveOrders() {
-        // SQL-first filtering: Only fetch rows where DeprecatedAt is null
         var activeOrders = await _context.LabOrders
             .Where(o => o.DeprecatedAt == null)
             .ToListAsync();
@@ -28,7 +27,6 @@ public class DiagnosticsController : ControllerBase {
     // POST: api/diagnostics/orders
     [HttpPost("orders")]
     public async Task<ActionResult<LabOrder>> PostOrder([FromBody] LabOrder newOrder) {
-        // The model binder ensures newOrder is instantiated and valid based on your rules
         _context.LabOrders.Add(newOrder);
         await _context.SaveChangesAsync();
 

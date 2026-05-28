@@ -1,1 +1,3 @@
 https://quest-poc.vercel.app/
+Vercel: Julliosanntos-urls
+https://quest-poc-api-gfe8debjdhgrgeap.canadacentral-01.azurewebsites.net/scalar/v1#tag/diagnostics/GET/api/Diagnostics/orders

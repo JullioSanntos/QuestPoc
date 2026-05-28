@@ -20,7 +20,7 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5056/api/diagnostics/orders');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/diagnostics/orders`);
       if (response.ok) {
         const data: LabOrder[] = await response.json();
         setOrders(data);
@@ -43,7 +43,7 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
     if (!window.confirm(`Are you sure you want to archive Order #${id}?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:5056/api/diagnostics/orders/${id}/deprecate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/diagnostics/orders/${id}/deprecate`, {
         method: 'POST'
       });
 

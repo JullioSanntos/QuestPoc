@@ -1,0 +1,14 @@
+Connection strings for quest-poc-dbserver.database.windows.net, db QuestDiagnosticsDb
+
+ADO.NET (SQL authentication)
+Server=tcp:quest-poc-dbserver.database.windows.net,1433;Initial Catalog=QuestDiagnosticsDb;Persist Security Info=False;User ID=QuestDiagnostics;Password=PlazaDr500@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+
+ADO.NET (Microsoft Entra password authentication): 
+Server=tcp:quest-poc-dbserver.database.windows.net,1433;Initial Catalog=QuestDiagnosticsDb;Persist Security Info=False;User ID={your_username};Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication="Active Directory Password";
+
+ADO.NET (Microsoft Entra integrated authentication)
+Server=tcp:quest-poc-dbserver.database.windows.net,1433;Initial Catalog=QuestDiagnosticsDb;Persist Security Info=False;User ID={your_username};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication="Active Directory Integrated";
+
+Microsoft Entra passwordless authentication
+Server=tcp:quest-poc-dbserver.database.windows.net,1433;Initial Catalog=QuestDiagnosticsDb;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication="Active Directory Default";
+

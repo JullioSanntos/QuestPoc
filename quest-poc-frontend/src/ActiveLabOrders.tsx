@@ -15,12 +15,15 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
   const [orders, setOrders] = useState<LabOrder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/diagnostics/orders`);
+        const fullUrl = `${baseUrl}/api/Diagnostics/orders`;
+        console.log("Fetching orders from URL:", fullUrl);
+      const response = await fetch(`${baseUrl}/api/Diagnostics/orders`);
       if (response.ok) {
         const data: LabOrder[] = await response.json();
         setOrders(data);
@@ -43,7 +46,7 @@ export const ActiveLabOrders: React.FC<ActiveLabOrdersProps> = ({ refreshTrigger
     if (!window.confirm(`Are you sure you want to archive Order #${id}?`)) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/diagnostics/orders/${id}/deprecate`, {
+      const response = await fetch(`${baseUrl}/api/diagnostics/orders/${id}/deprecate`, {
         method: 'POST'
       });
 

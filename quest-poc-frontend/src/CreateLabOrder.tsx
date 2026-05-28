@@ -30,9 +30,10 @@ export const CreateLabOrder: React.FC<CreateLabOrderProps> = ({ onOrderCreated }
     };
 
     setIsSubmitting(true);
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
     try {
       // Connecting to your active local .NET API hosting port
-      const response = await fetch('http://localhost:5056/api/diagnostics/orders', {
+      const response = await fetch(`${baseUrl}/api/Diagnostics/orders`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
